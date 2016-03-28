@@ -12,33 +12,26 @@ This document explains how to use Netplugin with Mesos Marathon. Currently, netp
 
 ```
 $ git clone https://github.com/contiv/netplugin
-$ cd netplugin/mgmtfn/mesos-docker
-$ vagrant up
+$ cd netplugin
+$ make mesos-docker-demo
 ```
 
 This will bring up a two node Vagrant setup with Mesos, Marathon and docker.
 Bringing up vagrant VMs and provisioning them can take few minutes to complete since it needs to download the VM images and mesos/marathon binaries. Please be patient.
+This will also build netplugin binaries and start them on both VMs
 
-### Step 2: Build netplugin binaries
 
-```
-$ vagrant ssh node1
-< Inside the VM>
-$ cd /opt/gopath/src/github.com/contiv/netplugin
-$ make host-build
-```
-
-### Step 3: Start netplugin
+### Step 2: Login to a VM and Create a network
 
 ```
-$ cd mgmtfn/mesos-docker
-$ ./startPlugin.sh
+$ cd demo/mesos-docker; vagrant ssh node1
+<Inside vagrant VM>
+$ netctl net create contiv -subnet 10.1.1.0/24
 ```
 
-This will start netplugin and netmaster processes on both VMs in the setup.
-This will also create a network called `contiv` to launch marathon containers
+This will create a network called `contiv`. Containers can be launched in this network.
 
-### Step 4: Launch containers
+### Step 3: Launch containers
 
 `docker.json` file in mgmtfn/mesos-docker directory has an example marathon app definition.
 

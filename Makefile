@@ -3,8 +3,8 @@
 
 # find all verifiable packages.
 # XXX: explore a better way that doesn't need multiple 'find'
-PKGS := `find . -mindepth 1 -maxdepth 1 -type d -name '*' | grep -vE '/\..*$\|Godeps|examples|docs|scripts|mgmtfn|bin|contrib'`
-PKGS += `find . -mindepth 2 -maxdepth 2 -type d -name '*'| grep -vE '/\..*$\|Godeps|examples|docs|scripts|bin|contrib'`
+PKGS := `find . -mindepth 1 -maxdepth 1 -type d -name '*' | grep -vE '/\..*$\|Godeps|examples|docs|scripts|mgmtfn|bin|contrib|demo'`
+PKGS += `find . -mindepth 2 -maxdepth 2 -type d -name '*'| grep -vE '/\..*$\|Godeps|examples|docs|scripts|bin|contrib|demo'`
 TO_BUILD := ./netplugin/ ./netmaster/ ./netctl/netctl/ ./mgmtfn/k8splugin/contivk8s/
 HOST_GOBIN := `if [ -n "$$(go env GOBIN)" ]; then go env GOBIN; else dirname $$(which go); fi`
 HOST_GOROOT := `go env GOROOT`
@@ -62,13 +62,23 @@ start: update
 
 #kubernetes demo targets
 k8s-cluster:
-	cd mgmtfn/k8splugin/contivk8s/vagrant && ./setup_cluster.sh
+	cd demo/k8s/ && ./setup_cluster.sh
 k8s-demo:
-	cd mgmtfn/k8splugin/contivk8s/vagrant && ./copy_demo.sh
+	cd demo/k8s/ && ./copy_demo.sh
 k8s-demo-start:
-	cd mgmtfn/k8splugin/contivk8s/vagrant && ./restart_cluster.sh && vagrant ssh k8master
+	cd demo/k8s/ && ./restart_cluster.sh && vagrant ssh k8master
 k8s-destroy:
-	cd mgmtfn/k8splugin/contivk8s/vagrant && vagrant destroy -f
+	cd demo/k8s/ && vagrant destroy -f
+
+# Mesos demo targets
+mesos-docker-demo:
+	cd demo/mesos-docker && vagrant up
+	cd demo/mesos-docker && vagrant ssh node1 -c 'sudo -i bash -lc "source /etc/profile.d/envvar.sh && cd /opt/gopath/src/github.com/contiv/netplugin && make run-build"'
+	cd demo/mesos-docker && vagrant ssh node1 -c 'sudo -i bash -lc "source /etc/profile.d/envvar.sh && cd /opt/gopath/src/github.com/contiv/netplugin && ./scripts/python/startPlugin.py -nodes 192.168.33.10,192.168.33.11"'
+
+mesos-docker-destroy:
+	cd demo/mesos-docker && vagrant destroy -f
+
 
 demo-centos:
 	CONTIV_NODE_OS=centos make demo
