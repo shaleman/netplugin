@@ -121,6 +121,7 @@ type NetworkDriver interface {
 	DelSvcSpec(svcName string, spec *ServiceSpec) error
 	// Service Proxy Back End update
 	SvcProviderUpdate(svcName string, providers []string)
+	GetEPStats() []byte
 }
 
 // WatchState is used to provide a difference between core.State structs by

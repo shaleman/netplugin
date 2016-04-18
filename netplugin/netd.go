@@ -24,6 +24,8 @@ import (
 	"os/user"
 	"strings"
 	"time"
+	"net"
+	"net/http"
 
 	"github.com/contiv/netplugin/core"
 	"github.com/contiv/netplugin/mgmtfn/dockplugin"
@@ -34,6 +36,7 @@ import (
 	"github.com/contiv/netplugin/svcplugin"
 	"github.com/contiv/netplugin/version"
 
+	"github.com/gorilla/mux"
 	log "github.com/Sirupsen/logrus"
 	"github.com/Sirupsen/logrus/hooks/syslog"
 )
@@ -230,6 +233,30 @@ func handleEvents(netPlugin *plugin.NetPlugin, opts cliOpts) error {
 	}
 
 	return nil
+}
+
+func serveStats(netPlugin *plugin.NetPlugin) {
+	listenURL := ":9090"
+	router := mux.NewRouter()
+
+	// Add REST routes
+	s := router.Methods("GET").Subrouter()
+	s.HandleFunc("/svcstats", func(w http.ResponseWriter, r *http.Request) {
+		stats := netPlugin.GetEPStats()
+		w.Write(stats)
+	})
+
+	// Create HTTP server and listener
+	server := &http.Server{Handler: router}
+	listener, err := net.Listen("tcp", listenURL)
+	if nil != err {
+		log.Fatalln(err)
+	}
+
+	log.Infof("Netplugin listening on %s", listenURL)
+
+	// start server
+	go server.Serve(listener)
 }
 
 func configureSyslog(syslogParam string) {
@@ -432,6 +459,10 @@ func main() {
 	if opts.pluginMode == "kubernetes" {
 		k8splugin.InitKubServiceWatch(netPlugin)
 	}
+
+	// start service svc stats
+	serveStats(netPlugin)
+
 
 	if err := handleEvents(netPlugin, opts); err != nil {
 		os.Exit(1)

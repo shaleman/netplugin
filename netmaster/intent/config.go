@@ -31,6 +31,7 @@ type ConfigEP struct {
 	AttachUUID  string
 	IPAddress   string
 	ServiceName string
+	Labels      map[string]string // endpoint labels
 }
 
 // ConfigNetwork is a multi-destination isolated containment of endpoints

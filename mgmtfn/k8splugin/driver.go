@@ -42,6 +42,7 @@ type epSpec struct {
 	Network    string `json:"network,omitempty"`
 	Group      string `json:"group,omitempty"`
 	EndpointID string `json:"endpointid,omitempty"`
+	Labels     map[string]string `json:"labels,omitempty"`
 }
 
 // epAttr contains the assigned attributes of the created ep
@@ -133,6 +134,7 @@ func createEP(req *epSpec) (*epAttr, error) {
 			Container:   req.EndpointID,
 			Host:        pluginHost,
 			ServiceName: req.Group,
+			Labels: req.Labels,
 		},
 	}
 
@@ -313,7 +315,16 @@ func getEPSpec(pInfo *cniapi.CNIPodAttr) (*epSpec, error) {
 	resp.Tenant = tenant
 	resp.Network = netw
 	resp.Group = epg
-	resp.EndpointID = pInfo.InfraContainerID
+	resp.EndpointID = pInfo.K8sNameSpace + "::" + pInfo.Name
+
+	labels, err := kubeAPIClient.GetAllLabels(pInfo.K8sNameSpace, pInfo.Name)
+	if err != nil {
+		log.Errorf("Error getting pod labels: %v", err)
+	} else {
+		log.Infof("POD Labels for pod %s: %+v", pInfo.Name, labels)
+	}
+
+	resp.Labels = labels
 
 	return &resp, nil
 }
@@ -403,3 +414,46 @@ func deletePod(r *http.Request) (interface{}, error) {
 	resp.EndpointID = pInfo.InfraContainerID
 	return resp, err
 }
+
+/*
+// getPodStats is the handler for pod stats
+func getPodStats(r *http.Request) (interface{}, error) {
+
+	resp := cniapi.RspAddPod{}
+
+	logEvent("pod stats")
+
+	content, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Failed to read request: %v", err)
+		return resp, err
+	}
+
+	pInfo := cniapi.CNIPodAttr{}
+	if err := json.Unmarshal(content, &pInfo); err != nil {
+		return resp, err
+	}
+
+	// Get labels from the kube api server
+	req, err := getEPSpec(&pInfo)
+	if err != nil {
+		log.Errorf("Error getting labels. Err: %v", err)
+		return resp, err
+	}
+
+	netID := req.Network + "." + req.Tenant
+	ep, err := netdGetEndpoint(netID + "-" + req.EndpointID)
+	if err != nil {
+		return resp, err
+	}
+	netPlugin.GetEPStats(ep.IPAddress)
+	labels, err := kubeAPIClient.GetAllLabels(pInfo.K8sNameSpace, pInfo.Name)
+	if err != nil {
+		log.Errorf("Error: %v", err)
+	} else {
+		log.Infof("Labels: %+v", labels)
+	}
+
+	return resp, err
+}
+*/

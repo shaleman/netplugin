@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/contiv/ofnet/ofctrl"
+	"github.com/shaleman/libOpenflow/openflow13"
 )
 
 // Interface implemented by each datapath
@@ -76,6 +77,10 @@ type OfnetDatapath interface {
 
 	// Service Proxy Back End update
 	SvcProviderUpdate(svcName string, providers []string)
+
+	MPReply(sw *ofctrl.OFSwitch,  reply *openflow13.MultipartReply)
+	// Get stats
+	GetEPStats() ([]*OfnetEPStats, error)
 }
 
 // Interface implemented by each control protocol.
@@ -170,4 +175,25 @@ type OfnetVrfInfo struct {
 	VrfName     string //vrf name
 	VrfId       uint16 //local vrf id
 	NumNetworks uint16 //ref count of networks in the vrf
+}
+
+type OfnetDPStats struct {
+	PacketsIn    uint64
+	BytesIn      uint64
+	PacketsOut   uint64
+	BytesOut     uint64
+}
+type OfnetSvcStats struct {
+	ProviderIP   string
+	Protocol     string
+	SvcPort      string
+	ProvPort     string
+	Stats        OfnetDPStats
+}
+
+type OfnetEPStats struct {
+	EndpointIP 	 string 		// Endpoint IP address
+	VrfName      string //vrf name
+	PortStats    OfnetDPStats  // Aggregate port stats
+	SvcStats     map[string]OfnetSvcStats  // Service level stats
 }

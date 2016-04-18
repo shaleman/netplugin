@@ -1,8 +1,9 @@
 package openflow13
 
 import (
-    "log"
     "encoding/binary"
+
+    log "github.com/Sirupsen/logrus"
 
     "github.com/shaleman/libOpenflow/common"
     "github.com/shaleman/libOpenflow/util"
@@ -22,6 +23,7 @@ func (s *MultipartRequest) Len() (n uint16) {
 }
 
 func (s *MultipartRequest) MarshalBinary() (data []byte, err error) {
+    s.Header.Length = s.Len()
     data, err = s.Header.MarshalBinary()
 
     b := make([]byte, 8)
@@ -35,6 +37,9 @@ func (s *MultipartRequest) MarshalBinary() (data []byte, err error) {
 
     b, err = s.Body.MarshalBinary()
     data = append(data, b...)
+
+    log.Infof("Sending MultipartRequest (%d): %v", len(data), data)
+
     return
 }
 
@@ -91,6 +96,7 @@ func (s *MultipartReply) Len() (n uint16) {
 }
 
 func (s *MultipartReply) MarshalBinary() (data []byte, err error) {
+    s.Header.Length = s.Len()
     data, err = s.Header.MarshalBinary()
 
     b := make([]byte, 8)
@@ -321,6 +327,8 @@ type FlowStatsRequest struct {
 
 func NewFlowStatsRequest() *FlowStatsRequest {
     s := new(FlowStatsRequest)
+    s.OutPort = P_ANY
+    s.OutGroup = OFPG_ANY
     s.pad = make([]byte, 3)
     s.pad2 = make([]byte, 4)
     s.Match = *NewMatch()

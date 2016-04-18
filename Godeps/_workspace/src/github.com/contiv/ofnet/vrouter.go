@@ -107,6 +107,12 @@ func (self *Vrouter) SwitchDisconnected(sw *ofctrl.OFSwitch) {
 	// FIXME: ??
 }
 
+func (self *Vrouter) MPReply(sw *ofctrl.OFSwitch, reply *openflow13.MultipartReply) {
+	if reply.Type == openflow13.MultipartType_Flow {
+		self.svcProxy.FlowStats(reply)
+	}
+}
+
 // Handle incoming packet
 func (self *Vrouter) PacketRcvd(sw *ofctrl.OFSwitch, pkt *ofctrl.PacketIn) {
 	if pkt.TableId == SRV_PROXY_SNAT_TBL_ID || pkt.TableId == SRV_PROXY_DNAT_TBL_ID {
@@ -563,6 +569,11 @@ func (vr *Vrouter) SvcProviderUpdate(svcName string, providers []string) {
 	vr.svcProxy.ProviderUpdate(svcName, providers)
 }
 
+// GetEPStats fetches ep stats
+func (vr *Vrouter)GetEPStats() ([]*OfnetEPStats, error) {
+        return vr.svcProxy.GetEPStats()
+}
+
 // initialize Fgraph on the switch
 func (self *Vrouter) initFgraph() error {
 	sw := self.ofSwitch
@@ -638,6 +649,10 @@ func (self *Vrouter) processArp(pkt protocol.Ethernet, inPort uint32) {
 		case protocol.Type_Request:
 			// Lookup the Dest IP in the endpoint table
 			vlan := self.agent.portVlanMap[inPort]
+			if vlan == nil {
+				log.Errorf("Vlan for port %d not found", inPort)
+				return
+			}
 			endpointId := self.agent.getEndpointIdByIpVlan(arpHdr.IPDst, *vlan)
 			endpoint := self.agent.endpointDb[endpointId]
 			if endpoint == nil {

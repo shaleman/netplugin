@@ -669,3 +669,10 @@ func (self *Vlrouter) DelSvcSpec(svcName string, spec *ServiceSpec) error {
 // SvcProviderUpdate Service Proxy Back End update
 func (self *Vlrouter) SvcProviderUpdate(svcName string, providers []string) {
 }
+
+// GetEPStats fetches ep stats
+func (self *Vlrouter)GetEPStats() ([]*OfnetEPStats, error) {
+        return nil, nil
+}
+func (self *Vlrouter) MPReply(sw *ofctrl.OFSwitch, reply *openflow13.MultipartReply) {
+}

@@ -23,7 +23,6 @@ import (
 	"sync"
 
 	"github.com/contiv/netplugin/core"
-	"github.com/contiv/netplugin/drivers"
 	"github.com/contiv/netplugin/netmaster/master"
 	"github.com/contiv/netplugin/netmaster/mastercfg"
 	"github.com/contiv/netplugin/netmaster/objApi"
@@ -49,6 +48,8 @@ type daemon struct {
 	listenerMutex    sync.Mutex            // Mutex for HTTP listener
 	stopLeaderChan   chan bool             // Channel to stop the leader listener
 	stopFollowerChan chan bool             // Channel to stop the follower listener
+
+	svcStats map[string]*ofnet.OfnetEPStats // svc stats
 }
 
 var leaderLock objdb.LockInterface // leader lock
@@ -189,6 +190,12 @@ func (d *daemon) registerRoutes(router *mux.Router) {
 		get(true, d.networks))
 	s.HandleFunc(fmt.Sprintf("/%s", master.GetVersionRESTEndpoint), getVersion)
 
+	// Serve svc stats
+	s.HandleFunc("/svcstats", func(w http.ResponseWriter, r *http.Request) {
+		stats := d.getSvcStats()
+		w.Write(stats)
+	})
+
 	// See if we need to create the default tenant
 	go objApi.CreateDefaultTenant()
 }
@@ -197,10 +204,10 @@ func (d *daemon) registerRoutes(router *mux.Router) {
 func (d *daemon) endpoints(id string) ([]core.State, error) {
 	var (
 		err error
-		ep  *drivers.OvsOperEndpointState
+		ep  *mastercfg.CfgEndpointState
 	)
 
-	ep = &drivers.OvsOperEndpointState{}
+	ep = &mastercfg.CfgEndpointState{}
 	if ep.StateDriver, err = utils.GetStateDriver(); err != nil {
 		return nil, err
 	}
@@ -365,6 +372,12 @@ func (d *daemon) runMasterFsm() {
 
 	// Register all existing netplugins in the background
 	go d.registerNetpluginNodes()
+
+	// initialize svc stats
+	d.svcStats = make(map[string]*ofnet.OfnetEPStats)
+
+	// start the stats polling thread
+	go d.pollSvcStats()
 
 	// Create the lock
 	leaderLock, err = d.objdbClient.NewLock("netmaster/leader", localIP, leaderLockTTL)

@@ -94,6 +94,7 @@ func CreateEndpoint(stateDriver core.StateDriver, nwCfg *mastercfg.CfgNetworkSta
 	epCfg.AttachUUID = ep.AttachUUID
 	epCfg.HomingHost = ep.Host
 	epCfg.ServiceName = ep.ServiceName
+	epCfg.Labels = ep.Labels
 
 	// Allocate addresses
 	err = allocSetEpAddress(ep, epCfg, nwCfg)

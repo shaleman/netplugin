@@ -633,6 +633,14 @@ func (vx *Vxlan) DelSvcSpec(svcName string, spec *ServiceSpec) error {
 func (vx *Vxlan) SvcProviderUpdate(svcName string, providers []string) {
 }
 
+// GetEPStats fetches ep stats
+func (vx *Vxlan)GetEPStats() ([]*OfnetEPStats, error) {
+        return nil, nil
+}
+
+func (vx *Vxlan) MPReply(sw *ofctrl.OFSwitch, reply *openflow13.MultipartReply) {
+}
+
 // initialize Fgraph on the switch
 func (self *Vxlan) initFgraph() error {
 	sw := self.ofSwitch
@@ -730,7 +738,7 @@ func (self *Vxlan) processArp(pkt protocol.Ethernet, inPort uint32) {
                             return
                         }
                         vlan := self.agent.portVlanMap[inPort]
-                           
+
 			// Lookup the Source and Dest IP in the endpoint table
 			srcEp := self.agent.getEndpointByIpVlan(arpIn.IPSrc, *vlan)
 			dstEp := self.agent.getEndpointByIpVlan(arpIn.IPDst, *vlan)

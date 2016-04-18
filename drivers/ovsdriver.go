@@ -518,3 +518,15 @@ func (d *OvsDriver) SvcProviderUpdate(svcName string, providers []string) {
 		sw.SvcProviderUpdate(svcName, providers)
 	}
 }
+
+// GetEPStats invokes ofnetAgent api
+func (d *OvsDriver) GetEPStats() []byte {
+	stats := d.switchDb["vxlan"].GetEPStats()
+	jsonStats, err := json.Marshal(stats)
+	if err != nil {
+		log.Errorf("Error encoding epstats. Err: %v", err)
+		return jsonStats
+	}
+
+	return jsonStats
+}

@@ -153,3 +153,8 @@ func (p *NetPlugin) AddBgp(id string) error {
 func (p *NetPlugin) DeleteBgp(id string) error {
 	return p.NetworkDriver.DeleteBgp(id)
 }
+
+//GetEPStats deletes bgp configs
+func (p *NetPlugin) GetEPStats() []byte {
+	return p.NetworkDriver.GetEPStats()
+}

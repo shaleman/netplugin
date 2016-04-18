@@ -33,6 +33,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/ofnet/ofctrl"
+	"github.com/shaleman/libOpenflow/openflow13"
 	"github.com/contiv/ofnet/ovsdbDriver"
 	"github.com/contiv/ofnet/rpcHub"
 	"github.com/jainvipin/bitset"
@@ -283,6 +284,15 @@ func (self *OfnetAgent) PacketRcvd(sw *ofctrl.OFSwitch, pkt *ofctrl.PacketIn) {
 
 	// Inform the datapath
 	self.datapath.PacketRcvd(sw, pkt)
+}
+
+// Receive a multi-part reply from the switch.
+func (self *OfnetAgent) MPReply(sw *ofctrl.OFSwitch,  reply *openflow13.MultipartReply) {
+	log.Infof("Multi-part reply received from switch: %+v", reply)
+	//log.Infof("Input Port: %+v", pkt.Match.Fields[0].Value)
+
+	// Inform the datapath
+	self.datapath.MPReply(sw, reply)
 }
 
 // Add a master
@@ -583,18 +593,24 @@ func (self *OfnetAgent) RemoveUplink(portNo uint32) error {
 
 // AddSvcSpec adds a service spec to proxy
 func (self *OfnetAgent) AddSvcSpec(svcName string, spec *ServiceSpec) error {
-	return self.datapath.AddSvcSpec(svcName, spec)
+        return self.datapath.AddSvcSpec(svcName, spec)
 }
 
 // DelSvcSpec removes a service spec from proxy
 func (self *OfnetAgent) DelSvcSpec(svcName string, spec *ServiceSpec) error {
-	return self.datapath.DelSvcSpec(svcName, spec)
+        return self.datapath.DelSvcSpec(svcName, spec)
 }
 
 // SvcProviderUpdate Service Proxy Back End update
 func (self *OfnetAgent) SvcProviderUpdate(svcName string, providers []string) {
-	self.datapath.SvcProviderUpdate(svcName, providers)
+        self.datapath.SvcProviderUpdate(svcName, providers)
 }
+
+// GetEPStats fetches stats for the endpoint
+func (self *OfnetAgent) GetEPStats() ([]*OfnetEPStats, error) {
+        return self.datapath.GetEPStats()
+}
+
 
 // Add remote endpoint RPC call from master
 func (self *OfnetAgent) EndpointAdd(epreg *OfnetEndpoint, ret *bool) error {

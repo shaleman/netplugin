@@ -292,6 +292,14 @@ func (vl *VlanBridge) DelSvcSpec(svcName string, spec *ServiceSpec) error {
 func (vl *VlanBridge) SvcProviderUpdate(svcName string, providers []string) {
 }
 
+// GetEPStats fetches ep stats
+func (vl *VlanBridge)GetEPStats() ([]*OfnetEPStats, error) {
+        return nil, nil
+}
+
+func (vl *VlanBridge) MPReply(sw *ofctrl.OFSwitch, reply *openflow13.MultipartReply) {
+}
+
 // initialize Fgraph on the switch
 func (vl *VlanBridge) initFgraph() error {
 	sw := vl.ofSwitch
@@ -358,7 +366,7 @@ func (vl *VlanBridge) processArp(pkt protocol.Ethernet, inPort uint32) {
 	case *protocol.ARP:
 		log.Debugf("Processing ARP packet on port %d: %+v", inPort, *t)
 		var arpIn protocol.ARP = *t
-             
+
 		switch arpIn.Operation {
 		case protocol.Type_Request:
 			// If it's a GARP packet, ignore processing
@@ -381,7 +389,7 @@ func (vl *VlanBridge) processArp(pkt protocol.Ethernet, inPort uint32) {
                                 }else {
                                    log.Debugf("Invalid port vlan mapping. Ignoring arp packet")
                                    return
-                                } 
+                                }
 			}
 			srcEp := vl.agent.getEndpointByIpVlan(arpIn.IPSrc, vlan)
 			dstEp := vl.agent.getEndpointByIpVlan(arpIn.IPDst, vlan)
