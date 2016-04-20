@@ -195,6 +195,10 @@ func (d *daemon) registerRoutes(router *mux.Router) {
 		stats := d.getSvcStats()
 		w.Write(stats)
 	})
+	s.HandleFunc("/servicestats", func(w http.ResponseWriter, r *http.Request) {
+		stats := d.getServiceStats()
+		w.Write(stats)
+	})
 
 	// See if we need to create the default tenant
 	go objApi.CreateDefaultTenant()

@@ -120,6 +120,7 @@ func NewAPIClient(serverURL, caFile, keyFile, certFile string) *APIClient {
 func (p *podInfo) setDefaults(ns, name string) {
 	p.nameSpace = ns
 	p.name = name
+	p.labels = make(map[string]string)
 	p.labels["io.contiv.tenant"] = "default"
 	p.labels["io.contiv.network"] = "default-net"
 	p.labels["io.contiv.net-group"] = ""
@@ -341,6 +342,9 @@ func (c *APIClient) WatchSvcEps(respCh chan EpWatchResp) {
 				respCh <- EpWatchResp{opcode: "WARN", errStr: fmt.Sprintf("unmarshal %v", err)}
 				continue
 			}
+
+			log.Infof("Kube svc endpoint update: %+v", weps)
+			
 			if weps.Object.ObjectMeta.Namespace != "default" {
 				continue
 			}
