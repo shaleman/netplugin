@@ -40,6 +40,7 @@ type PktStats struct {
 type PktStatsHistory struct {
 	maxCount int
 	currCount int
+	lastPktStats PktStats
 	History []*PktStats
 }
 
@@ -160,7 +161,7 @@ func (d *daemon) pollSvcStats() {
 
   // poll forever
   for {
-    time.Sleep(2 * time.Second)
+    time.Sleep(5 * time.Second)
 
     // Get all netplugin services
     srvList, err := d.objdbClient.GetService("netplugin")
@@ -322,7 +323,28 @@ func newPktStatsHistory(maxCount int) *PktStatsHistory {
 }
 
 func addPktStatsHistory(hist *PktStatsHistory, stats *PktStats) {
-	hist.History = append(hist.History, stats)
+	var diff PktStats
+
+	// Calculate diff to previous pkt stats
+	if hist.currCount == 0 {
+		hist.lastPktStats = *stats
+	} else {
+		if stats.PacketsOut > hist.lastPktStats.PacketsOut {
+			diff.PacketsOut = stats.PacketsOut - hist.lastPktStats.PacketsOut
+		}
+		if stats.BytesOut > hist.lastPktStats.BytesOut {
+			diff.BytesOut = stats.BytesOut - hist.lastPktStats.BytesOut
+		}
+		if stats.PacketsIn > hist.lastPktStats.PacketsIn {
+			diff.PacketsIn = stats.PacketsIn - hist.lastPktStats.PacketsIn
+		}
+		if stats.BytesIn > hist.lastPktStats.BytesIn {
+			diff.BytesIn = stats.BytesIn - hist.lastPktStats.BytesIn
+		}
+		hist.lastPktStats = *stats
+	}
+
+	hist.History = append(hist.History, &diff)
 	if hist.currCount >= hist.maxCount {
 		hist.History = hist.History[1:]
 	} else {
