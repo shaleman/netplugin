@@ -16,14 +16,24 @@ limitations under the License.
 package master
 
 import (
+	"reflect"
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/contiv/netplugin/core"
 	"github.com/contiv/netplugin/netmaster/intent"
 	"github.com/contiv/netplugin/netmaster/mastercfg"
 	"github.com/contiv/netplugin/utils"
-	"reflect"
-	"strings"
+
+	"github.com/contiv/netplugin/netplugin/svcplugin"
+
+	// import and init skydns libraries
+	_ "github.com/contiv/netplugin/netplugin/svcplugin/consulextension"
+	_ "github.com/contiv/netplugin/netplugin/svcplugin/skydns2extension"
 )
+
+// Initialize service registry plugin
+var svcPlugin, quitCh, _ = svcplugin.NewSvcregPlugin("etcd://127.0.0.1:2379", nil)
 
 //CreateServiceLB adds to the etcd state
 func CreateServiceLB(stateDriver core.StateDriver, serviceLbCfg *intent.ConfigServiceLB) error {
@@ -122,6 +132,9 @@ func CreateServiceLB(stateDriver core.StateDriver, serviceLbCfg *intent.ConfigSe
 		}
 	}
 
+	// add DNS entry for the service.
+	svcPlugin.AddService(serviceID, serviceLbState.ServiceName, serviceLbState.Network, serviceLbState.Tenant, serviceLbState.IPAddress)
+
 	//Write into cluster store
 	err = serviceLbState.Write()
 
@@ -187,6 +200,10 @@ func DeleteServiceLB(stateDriver core.StateDriver, serviceName string, tenantNam
 			}
 		}
 	}
+
+	// remove dns entry
+	svcPlugin.RemoveService(serviceID, serviceLBState.ServiceName, serviceLBState.Network, serviceLBState.Tenant, serviceLBState.IPAddress)
+
 	//Remove the service from the service cache
 	delete(mastercfg.ServiceLBDb, serviceID)
 

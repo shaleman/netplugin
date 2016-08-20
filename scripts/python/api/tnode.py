@@ -105,11 +105,11 @@ class Node:
 
     # Remove all containers on this node
     def cleanupContainers(self):
-        self.runCmd("docker ps -a | grep alpine | awk '{print $1}' | xargs -r docker rm -fv ")
+        self.runCmd("docker ps -a | grep -v 'swarm\|etcd\|contiv-ui' | awk '{print $1}' | xargs -r docker rm -fv ")
 
     # Cleanup all state created by netplugin
     def cleanupSlave(self):
-        self.runCmd("docker ps -a | grep alpine | awk '{print $1}' | xargs -r docker rm -fv ")
+        self.runCmd("docker ps -a | grep -v 'swarm\|etcd\|contiv-ui' | awk '{print $1}' | xargs -r docker rm -fv ")
         self.runCmd("sudo ovs-vsctl del-br contivVxlanBridge")
         self.runCmd("sudo ovs-vsctl del-br contivVlanBridge")
         self.runCmd("ifconfig | grep -e vport | awk '{print $1}' | xargs -r -n1 -I{} sudo ip link delete {} type veth")
